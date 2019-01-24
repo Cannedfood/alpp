@@ -127,6 +127,7 @@ void Buffer::gen() noexcept {
 void Buffer::destroy() noexcept {
 	if(mHandle) {
 		alDeleteBuffers(1, &mHandle); AL_CHECK_ERROR();
+		mHandle = 0;
 	}
 }
 
@@ -277,6 +278,7 @@ void Source::gen() noexcept {
 void Source::destroy() noexcept {
 	if(mHandle) {
 		alDeleteSources(1, &mHandle); AL_CHECK_ERROR();
+		mHandle = 0;
 	}
 }
 
