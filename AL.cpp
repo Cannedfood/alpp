@@ -76,6 +76,25 @@ Context::~Context() noexcept {
 }
 
 // =============================================================
+// == Format =============================================
+// =============================================================
+
+Format MultiChannelFormat(Format mono, unsigned channels) {
+	if(channels == 1) return mono;
+
+	if(channels == 2) {
+		switch (mono) {
+			case Format::Mono8: return Format::Stereo8;
+			case Format::Mono16: return Format::Stereo16;
+			case Format::MonoF32: return Format::StereoF32;
+			default: throw std::runtime_error("Argument mono is not a mono format!");
+		}
+	}
+
+	throw std::runtime_error("Unsupported number of channels: " + std::to_string(channels));
+}
+
+// =============================================================
 // == BufferView =============================================
 // =============================================================
 

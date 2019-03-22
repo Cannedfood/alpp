@@ -15,7 +15,12 @@ enum class Format {
 	Mono16   = 0x1101,
 	Stereo8  = 0x1102,
 	Stereo16 = 0x1103,
+
+	MonoF32   = 0x10010,
+	StereoF32 = 0x10011
 };
+
+Format MultiChannelFormat(Format mono, unsigned channels);
 
 enum class SourceState {
 	Initial = 0x1011,
