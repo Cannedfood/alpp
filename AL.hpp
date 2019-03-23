@@ -36,10 +36,17 @@ enum class SourceType {
 };
 
 class Context {
-	void* mContextHandle;
 public:
-	Context();
+	Context(std::nullptr_t) noexcept;
+
+	Context() noexcept;
 	~Context() noexcept;
+
+	void init() noexcept;
+	void close() noexcept;
+
+private:
+	void* mContextHandle;
 };
 
 class BufferView {

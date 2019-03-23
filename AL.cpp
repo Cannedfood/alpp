@@ -62,13 +62,29 @@ namespace al {
 // == Context =============================================
 // =============================================================
 
-Context::Context() {
+Context::Context(std::nullptr_t) noexcept : mContextHandle(nullptr) {}
+
+Context::Context() noexcept :
+	Context(nullptr)
+{
+	init();
+}
+Context::~Context() noexcept {
+	close();
+}
+
+void Context::init() noexcept {
+	close();
+
 	ALCdevice* device = alcOpenDevice(NULL); ALC_CHECK_ERROR(device);
 	mContext = alcCreateContext(device, NULL); ALC_CHECK_ERROR(device);
 	alcMakeContextCurrent(mContext); ALC_CHECK_ERROR(device);
 	alGetError(); // Clear errors
 }
-Context::~Context() noexcept {
+void Context::close() noexcept {
+	if(mContextHandle == nullptr)
+		return;
+
 	auto device = alcGetContextsDevice(mContext); ALC_CHECK_ERROR(device);
 	alcMakeContextCurrent(NULL); ALC_CHECK_ERROR(device);
 	alcDestroyContext(mContext); ALC_CHECK_ERROR(device);
