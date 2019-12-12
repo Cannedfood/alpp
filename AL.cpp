@@ -8,7 +8,13 @@
 #include <stdexcept>
 #include <cassert>
 
-#define mContext ((ALCcontext*&) mContextHandle)
+#ifndef ALPP_DECL
+	#ifdef ALPP_INLINE
+		#define ALPP_DECL inline
+	#else
+		#define ALPP_DECL
+	#endif
+#endif
 
 #ifndef NDEBUG
 	#define AL_ERROR_CHECKING
@@ -62,32 +68,32 @@ namespace al {
 // == Context =============================================
 // =============================================================
 
-Context::Context(std::nullptr_t) noexcept : mContextHandle(nullptr) {}
+ALPP_DECL Context::Context(std::nullptr_t) noexcept : mContext(nullptr) {}
 
-Context::Context() noexcept :
+ALPP_DECL Context::Context() noexcept :
 	Context(nullptr)
 {
 	init();
 }
-Context::~Context() noexcept {
+ALPP_DECL Context::~Context() noexcept {
 	close();
 }
 
-void Context::init() noexcept {
+ALPP_DECL void Context::init() noexcept {
 	close();
 
 	ALCdevice* device = alcOpenDevice(NULL); ALC_CHECK_ERROR(device);
 	mContext = alcCreateContext(device, NULL); ALC_CHECK_ERROR(device);
-	alcMakeContextCurrent(mContext); ALC_CHECK_ERROR(device);
+	alcMakeContextCurrent((ALCcontext*)mContext); ALC_CHECK_ERROR(device);
 	alGetError(); // Clear errors
 }
-void Context::close() noexcept {
-	if(mContextHandle == nullptr)
+ALPP_DECL void Context::close() noexcept {
+	if(mContext == nullptr)
 		return;
 
-	auto device = alcGetContextsDevice(mContext); ALC_CHECK_ERROR(device);
+	auto device = alcGetContextsDevice((ALCcontext*)mContext); ALC_CHECK_ERROR(device);
 	alcMakeContextCurrent(NULL); ALC_CHECK_ERROR(device);
-	alcDestroyContext(mContext); ALC_CHECK_ERROR(device);
+	alcDestroyContext((ALCcontext*)mContext); ALC_CHECK_ERROR(device);
 	alcCloseDevice(device);
 }
 
@@ -95,7 +101,7 @@ void Context::close() noexcept {
 // == Format =============================================
 // =============================================================
 
-Format MultiChannelFormat(Format mono, unsigned channels) {
+ALPP_DECL Format MultiChannelFormat(Format mono, unsigned channels) {
 	if(channels == 1) return mono;
 
 	if(channels == 2) {
@@ -114,52 +120,52 @@ Format MultiChannelFormat(Format mono, unsigned channels) {
 // == BufferView =============================================
 // =============================================================
 
-BufferView::BufferView(unsigned handle) noexcept : mHandle(handle) {}
-BufferView::~BufferView() noexcept {}
+ALPP_DECL BufferView::BufferView(unsigned handle) noexcept : mHandle(handle) {}
+ALPP_DECL BufferView::~BufferView() noexcept {}
 
-void BufferView::data(void const* data, size_t size, Format fmt, unsigned freq) noexcept {
+ALPP_DECL void BufferView::data(void const* data, size_t size, Format fmt, unsigned freq) noexcept {
 	alBufferData(mHandle, (ALenum)fmt, data, size, freq); AL_CHECK_ERROR();
 }
 
-int BufferView::geti(unsigned param) const noexcept {
+ALPP_DECL int BufferView::geti(unsigned param) const noexcept {
 	int result;
 	alGetBufferi(mHandle, param, &result); AL_CHECK_ERROR();
 	return result;
 }
 
-int BufferView::frequency() const noexcept { return geti(AL_FREQUENCY); }
-int BufferView::bits() const noexcept { return geti(AL_BITS); }
-int BufferView::channels() const noexcept { return geti(AL_CHANNELS); }
+ALPP_DECL int BufferView::frequency() const noexcept { return geti(AL_FREQUENCY); }
+ALPP_DECL int BufferView::bits() const noexcept { return geti(AL_BITS); }
+ALPP_DECL int BufferView::channels() const noexcept { return geti(AL_CHANNELS); }
 
-int BufferView::size() const noexcept { return geti(AL_SIZE); }
+ALPP_DECL int BufferView::size() const noexcept { return geti(AL_SIZE); }
 
 // =============================================================
 // == Buffer =============================================
 // =============================================================
 
-Buffer::Buffer() noexcept :
+ALPP_DECL Buffer::Buffer() noexcept :
 	BufferView()
 {}
-Buffer::Buffer(void const* data, size_t size, Format fmt, unsigned freq) noexcept :
+ALPP_DECL Buffer::Buffer(void const* data, size_t size, Format fmt, unsigned freq) noexcept :
 	Buffer()
 {
 	gen();
 	this->data(data, size, fmt, freq);
 }
-Buffer::~Buffer() noexcept { destroy(); }
+ALPP_DECL Buffer::~Buffer() noexcept { destroy(); }
 
-Buffer::Buffer(Buffer&& src) noexcept : BufferView(std::exchange(src.mHandle, 0)){}
-Buffer& Buffer::operator=(Buffer&& src) noexcept {
+ALPP_DECL Buffer::Buffer(Buffer&& src) noexcept : BufferView(std::exchange(src.mHandle, 0)){}
+ALPP_DECL Buffer& Buffer::operator=(Buffer&& src) noexcept {
 	destroy();
 	mHandle = std::exchange(src.mHandle, 0);
 	return *this;
 }
 
-void Buffer::gen() noexcept {
+ALPP_DECL void Buffer::gen() noexcept {
 	destroy();
 	alGenBuffers(1, &mHandle); AL_CHECK_ERROR();
 }
-void Buffer::destroy() noexcept {
+ALPP_DECL void Buffer::destroy() noexcept {
 	if(mHandle) {
 		alDeleteBuffers(1, &mHandle); AL_CHECK_ERROR();
 		mHandle = 0;
@@ -170,22 +176,22 @@ void Buffer::destroy() noexcept {
 // == SourceView =============================================
 // =============================================================
 
-SourceView::SourceView(unsigned handle) noexcept : mHandle(handle) {}
+ALPP_DECL SourceView::SourceView(unsigned handle) noexcept : mHandle(handle) {}
 
-void SourceView::play() {
+ALPP_DECL void SourceView::play() {
 	alSourcePlay(mHandle); AL_CHECK_ERROR();
 }
-void SourceView::pause() {
+ALPP_DECL void SourceView::pause() {
 	alSourcePause(mHandle); AL_CHECK_ERROR();
 }
-void SourceView::stop() {
+ALPP_DECL void SourceView::stop() {
 	alSourceStop(mHandle); AL_CHECK_ERROR();
 }
-void SourceView::rewind() {
+ALPP_DECL void SourceView::rewind() {
 	alSourceRewind(mHandle); AL_CHECK_ERROR();
 }
 
-void SourceView::queueBuffers(BufferView const* buffers, size_t count) {
+ALPP_DECL void SourceView::queueBuffers(BufferView const* buffers, size_t count) {
 	static_assert(sizeof(BufferView) == sizeof(unsigned));
 	alSourceQueueBuffers(
 		mHandle,
@@ -193,7 +199,7 @@ void SourceView::queueBuffers(BufferView const* buffers, size_t count) {
 		reinterpret_cast<unsigned const*>(buffers)
 	); AL_CHECK_ERROR();
 }
-void SourceView::unqueueBuffers(al::BufferView* buffers, size_t count) {
+ALPP_DECL void SourceView::unqueueBuffers(al::BufferView* buffers, size_t count) {
 	static_assert(sizeof(BufferView) == sizeof(unsigned));
 	alSourceUnqueueBuffers(
 		mHandle,
@@ -203,114 +209,114 @@ void SourceView::unqueueBuffers(al::BufferView* buffers, size_t count) {
 }
 
 
-float     SourceView::getf(unsigned param) const noexcept {
+ALPP_DECL float     SourceView::getf(unsigned param) const noexcept {
 	float result;
 	alGetSourcef(mHandle, param, &result); AL_CHECK_ERROR();
 	return result;
 }
-int       SourceView::geti(unsigned param) const noexcept {
+ALPP_DECL int       SourceView::geti(unsigned param) const noexcept {
 	int result;
 	alGetSourcei(mHandle, param, &result); AL_CHECK_ERROR();
 	return result;
 }
-glm::vec3 SourceView::get3f(unsigned param) const noexcept {
+ALPP_DECL glm::vec3 SourceView::get3f(unsigned param) const noexcept {
 	glm::vec3 result;
 	alGetSourcefv(mHandle, param, &result[0]); AL_CHECK_ERROR();
 	return result;
 }
-void SourceView::set(unsigned param, float value) const noexcept {
+ALPP_DECL void SourceView::set(unsigned param, float value) const noexcept {
 	alSourcef(mHandle, param, value); AL_CHECK_ERROR();
 }
-void SourceView::set(unsigned param, int value) const noexcept {
+ALPP_DECL void SourceView::set(unsigned param, int value) const noexcept {
 	alSourcei(mHandle, param, value); AL_CHECK_ERROR();
 }
-void SourceView::set(unsigned param, glm::vec3 value) const noexcept {
+ALPP_DECL void SourceView::set(unsigned param, glm::vec3 value) const noexcept {
 	alSource3f(mHandle, param, value.x, value.y, value.z); AL_CHECK_ERROR();
 }
 
 
-float SourceView::pitch() const noexcept { return getf(AL_PITCH); }
-void  SourceView::pitch(float value) noexcept { set(AL_PITCH, value); }
-float SourceView::gain() const noexcept { return getf(AL_GAIN); }
-void  SourceView::gain(float value) noexcept { set(AL_GAIN, value); }
-float SourceView::max_distance() const noexcept { return getf(AL_MAX_DISTANCE); }
-void  SourceView::max_distance(float value) noexcept { set(AL_MAX_DISTANCE, value); }
-float SourceView::rolloff_factor() const noexcept { return getf(AL_ROLLOFF_FACTOR); }
-void  SourceView::rolloff_factor(float value) noexcept { set(AL_ROLLOFF_FACTOR, value); }
-float SourceView::reference_distance() const noexcept { return getf(AL_REFERENCE_DISTANCE); }
-void  SourceView::reference_distance(float value) noexcept { set(AL_REFERENCE_DISTANCE, value); }
+ALPP_DECL float SourceView::pitch() const noexcept { return getf(AL_PITCH); }
+ALPP_DECL void  SourceView::pitch(float value) noexcept { set(AL_PITCH, value); }
+ALPP_DECL float SourceView::gain() const noexcept { return getf(AL_GAIN); }
+ALPP_DECL void  SourceView::gain(float value) noexcept { set(AL_GAIN, value); }
+ALPP_DECL float SourceView::max_distance() const noexcept { return getf(AL_MAX_DISTANCE); }
+ALPP_DECL void  SourceView::max_distance(float value) noexcept { set(AL_MAX_DISTANCE, value); }
+ALPP_DECL float SourceView::rolloff_factor() const noexcept { return getf(AL_ROLLOFF_FACTOR); }
+ALPP_DECL void  SourceView::rolloff_factor(float value) noexcept { set(AL_ROLLOFF_FACTOR, value); }
+ALPP_DECL float SourceView::reference_distance() const noexcept { return getf(AL_REFERENCE_DISTANCE); }
+ALPP_DECL void  SourceView::reference_distance(float value) noexcept { set(AL_REFERENCE_DISTANCE, value); }
 
-float SourceView::min_gain() const noexcept { return getf(AL_MIN_GAIN); }
-void  SourceView::min_gain(float value) noexcept { set(AL_MIN_GAIN, value); }
-float SourceView::max_gain() const noexcept { return getf(AL_MAX_GAIN); }
-void  SourceView::max_gain(float value) noexcept { set(AL_MAX_GAIN, value); }
-float SourceView::cone_outer_gain() const noexcept { return getf(AL_CONE_OUTER_GAIN); }
-void  SourceView::cone_outer_gain(float value) noexcept { set(AL_CONE_OUTER_GAIN, value); }
-float SourceView::cone_inner_angle() const noexcept { return getf(AL_CONE_INNER_ANGLE); }
-void  SourceView::cone_inner_angle(float value) noexcept { set(AL_CONE_INNER_ANGLE, value); }
-float SourceView::cone_outer_angle() const noexcept { return getf(AL_CONE_OUTER_ANGLE); }
-void  SourceView::cone_outer_angle(float value) noexcept { set(AL_CONE_OUTER_ANGLE, value); }
+ALPP_DECL float SourceView::min_gain() const noexcept { return getf(AL_MIN_GAIN); }
+ALPP_DECL void  SourceView::min_gain(float value) noexcept { set(AL_MIN_GAIN, value); }
+ALPP_DECL float SourceView::max_gain() const noexcept { return getf(AL_MAX_GAIN); }
+ALPP_DECL void  SourceView::max_gain(float value) noexcept { set(AL_MAX_GAIN, value); }
+ALPP_DECL float SourceView::cone_outer_gain() const noexcept { return getf(AL_CONE_OUTER_GAIN); }
+ALPP_DECL void  SourceView::cone_outer_gain(float value) noexcept { set(AL_CONE_OUTER_GAIN, value); }
+ALPP_DECL float SourceView::cone_inner_angle() const noexcept { return getf(AL_CONE_INNER_ANGLE); }
+ALPP_DECL void  SourceView::cone_inner_angle(float value) noexcept { set(AL_CONE_INNER_ANGLE, value); }
+ALPP_DECL float SourceView::cone_outer_angle() const noexcept { return getf(AL_CONE_OUTER_ANGLE); }
+ALPP_DECL void  SourceView::cone_outer_angle(float value) noexcept { set(AL_CONE_OUTER_ANGLE, value); }
 
-glm::vec3 SourceView::position() const noexcept { return get3f(AL_POSITION); }
-void      SourceView::position(glm::vec3 value) noexcept { set(AL_POSITION, value); }
-glm::vec3 SourceView::velocity() const noexcept { return get3f(AL_VELOCITY); }
-void      SourceView::velocity(glm::vec3 value) noexcept { set(AL_VELOCITY, value); }
-glm::vec3 SourceView::direction() const noexcept { return get3f(AL_DIRECTION); }
-void      SourceView::direction(glm::vec3 value) noexcept { set(AL_DIRECTION, value); }
+ALPP_DECL glm::vec3 SourceView::position() const noexcept { return get3f(AL_POSITION); }
+ALPP_DECL void      SourceView::position(glm::vec3 value) noexcept { set(AL_POSITION, value); }
+ALPP_DECL glm::vec3 SourceView::velocity() const noexcept { return get3f(AL_VELOCITY); }
+ALPP_DECL void      SourceView::velocity(glm::vec3 value) noexcept { set(AL_VELOCITY, value); }
+ALPP_DECL glm::vec3 SourceView::direction() const noexcept { return get3f(AL_DIRECTION); }
+ALPP_DECL void      SourceView::direction(glm::vec3 value) noexcept { set(AL_DIRECTION, value); }
 
-bool       SourceView::relative() const noexcept { return geti(AL_SOURCE_RELATIVE); }
-void       SourceView::relative(bool value) noexcept { set(AL_SOURCE_RELATIVE, value ? AL_TRUE : AL_FALSE); }
-SourceType SourceView::type() const noexcept { return (SourceType)geti(AL_SOURCE_TYPE); }
-void       SourceView::type(SourceType value) noexcept { set(AL_SOURCE_TYPE, (int)value); }
+ALPP_DECL bool       SourceView::relative() const noexcept { return geti(AL_SOURCE_RELATIVE); }
+ALPP_DECL void       SourceView::relative(bool value) noexcept { set(AL_SOURCE_RELATIVE, value ? AL_TRUE : AL_FALSE); }
+ALPP_DECL SourceType SourceView::type() const noexcept { return (SourceType)geti(AL_SOURCE_TYPE); }
+ALPP_DECL void       SourceView::type(SourceType value) noexcept { set(AL_SOURCE_TYPE, (int)value); }
 
-bool        SourceView::looping() const noexcept { return geti(AL_LOOPING); }
-void        SourceView::looping(bool value) noexcept { set(AL_LOOPING, value ? AL_TRUE : AL_FALSE); }
-BufferView  SourceView::buffer() const noexcept { return BufferView(geti(AL_BUFFER)); }
-void        SourceView::buffer(BufferView value) noexcept { set(AL_BUFFER, (int)value); }
-SourceState SourceView::state() const noexcept { return (SourceState)geti(AL_SOURCE_STATE); }
-void        SourceView::state(SourceState value) noexcept { set(AL_SOURCE_STATE, (int)value); }
+ALPP_DECL bool        SourceView::looping() const noexcept { return geti(AL_LOOPING); }
+ALPP_DECL void        SourceView::looping(bool value) noexcept { set(AL_LOOPING, value ? AL_TRUE : AL_FALSE); }
+ALPP_DECL BufferView  SourceView::buffer() const noexcept { return BufferView(geti(AL_BUFFER)); }
+ALPP_DECL void        SourceView::buffer(BufferView value) noexcept { set(AL_BUFFER, (int)value); }
+ALPP_DECL SourceState SourceView::state() const noexcept { return (SourceState)geti(AL_SOURCE_STATE); }
+ALPP_DECL void        SourceView::state(SourceState value) noexcept { set(AL_SOURCE_STATE, (int)value); }
 
-unsigned SourceView::buffers_queued() const noexcept { return geti(AL_BUFFERS_QUEUED); }
-unsigned SourceView::buffers_processed() const noexcept { return geti(AL_BUFFERS_PROCESSED); }
+ALPP_DECL unsigned SourceView::buffers_queued() const noexcept { return geti(AL_BUFFERS_QUEUED); }
+ALPP_DECL unsigned SourceView::buffers_processed() const noexcept { return geti(AL_BUFFERS_PROCESSED); }
 
-float  SourceView::sec_offset() const noexcept { return getf(AL_SEC_OFFSET); }
-void   SourceView::sec_offset(float value) noexcept { set(AL_SEC_OFFSET, value); }
-size_t SourceView::sample_offset() const noexcept { return geti(AL_SAMPLE_OFFSET); }
-void   SourceView::sample_offset(size_t value) noexcept { set(AL_SAMPLE_OFFSET, (int)value); }
-size_t SourceView::byte_offset() const noexcept { return geti(AL_BYTE_OFFSET); }
-void   SourceView::byte_offset(size_t value) noexcept { set(AL_BYTE_OFFSET, (int)value); }
+ALPP_DECL float  SourceView::sec_offset() const noexcept { return getf(AL_SEC_OFFSET); }
+ALPP_DECL void   SourceView::sec_offset(float value) noexcept { set(AL_SEC_OFFSET, value); }
+ALPP_DECL size_t SourceView::sample_offset() const noexcept { return geti(AL_SAMPLE_OFFSET); }
+ALPP_DECL void   SourceView::sample_offset(size_t value) noexcept { set(AL_SAMPLE_OFFSET, (int)value); }
+ALPP_DECL size_t SourceView::byte_offset() const noexcept { return geti(AL_BYTE_OFFSET); }
+ALPP_DECL void   SourceView::byte_offset(size_t value) noexcept { set(AL_BYTE_OFFSET, (int)value); }
 
 // =============================================================
 // == Source =============================================
 // =============================================================
 
-Source::Source() noexcept :
+ALPP_DECL Source::Source() noexcept :
 	SourceView()
 {}
 
-Source::Source(BufferView buffer) noexcept :
+ALPP_DECL Source::Source(BufferView buffer) noexcept :
 	Source()
 {
 	gen();
 	this->buffer(buffer);
 }
 
-Source::~Source() noexcept {
+ALPP_DECL Source::~Source() noexcept {
 	destroy();
 }
 
-Source::Source(Source&& src) noexcept : SourceView(std::exchange(src.mHandle, 0)) {}
-Source& Source::operator=(Source&& src) noexcept {
+ALPP_DECL Source::Source(Source&& src) noexcept : SourceView(std::exchange(src.mHandle, 0)) {}
+ALPP_DECL Source& Source::operator=(Source&& src) noexcept {
 	destroy();
 	mHandle = std::exchange(src.mHandle, 0);
 	return *this;
 }
 
-void Source::gen() noexcept {
+ALPP_DECL void Source::gen() noexcept {
 	destroy();
 	alGenSources(1, &mHandle); AL_CHECK_ERROR();
 }
-void Source::destroy() noexcept {
+ALPP_DECL void Source::destroy() noexcept {
 	if(mHandle) {
 		alDeleteSources(1, &mHandle); AL_CHECK_ERROR();
 		mHandle = 0;
@@ -321,40 +327,40 @@ void Source::destroy() noexcept {
 // == Listener =============================================
 // =============================================================
 
-void Listener::set(unsigned param, int       value) noexcept {
+ALPP_DECL void Listener::set(unsigned param, int       value) noexcept {
 	alListeneri(param, value); AL_CHECK_ERROR();
 }
-void Listener::set(unsigned param, float     value) noexcept {
+ALPP_DECL void Listener::set(unsigned param, float     value) noexcept {
 	alListenerf(param, value); AL_CHECK_ERROR();
 }
-void Listener::set(unsigned param, glm::vec3 value) noexcept {
+ALPP_DECL void Listener::set(unsigned param, glm::vec3 value) noexcept {
 	alListener3f(param, value.x, value.y, value.z); AL_CHECK_ERROR();
 }
 
-int Listener::geti(unsigned param) noexcept {
+ALPP_DECL int Listener::geti(unsigned param) noexcept {
 	int result;
 	alGetListeneri(param, &result); AL_CHECK_ERROR();
 	return result;
 }
-float Listener::getf(unsigned param) noexcept {
+ALPP_DECL float Listener::getf(unsigned param) noexcept {
 	float result;
 	alGetListenerf(param, &result); AL_CHECK_ERROR();
 	return result;
 }
-glm::vec3 Listener::get3f(unsigned param) noexcept {
+ALPP_DECL glm::vec3 Listener::get3f(unsigned param) noexcept {
 	glm::vec3 result;
 	alGetListenerfv(param, &result[0]); AL_CHECK_ERROR();
 	return result;
 }
 
-float Listener::gain() noexcept { return Listener::getf(AL_GAIN); }
-void  Listener::gain(float f) noexcept { Listener::set(AL_GAIN, f); }
+ALPP_DECL float Listener::gain() noexcept { return Listener::getf(AL_GAIN); }
+ALPP_DECL void  Listener::gain(float f) noexcept { Listener::set(AL_GAIN, f); }
 
-glm::vec3 Listener::position() noexcept { return Listener::get3f(AL_POSITION); }
-void Listener::position(glm::vec3 v) noexcept { Listener::set(AL_POSITION, v); }
-glm::vec3 Listener::velocity() noexcept { return Listener::get3f(AL_VELOCITY); }
-void Listener::velocity(glm::vec3 v) noexcept { Listener::set(AL_VELOCITY, v); }
-void Listener::orientation(glm::vec3 fwd, glm::vec3 up) noexcept {
+ALPP_DECL glm::vec3 Listener::position() noexcept { return Listener::get3f(AL_POSITION); }
+ALPP_DECL void Listener::position(glm::vec3 v) noexcept { Listener::set(AL_POSITION, v); }
+ALPP_DECL glm::vec3 Listener::velocity() noexcept { return Listener::get3f(AL_VELOCITY); }
+ALPP_DECL void Listener::velocity(glm::vec3 v) noexcept { Listener::set(AL_VELOCITY, v); }
+ALPP_DECL void Listener::orientation(glm::vec3 fwd, glm::vec3 up) noexcept {
 	glm::vec3 fwdup[] = {fwd, up};
 	alListenerfv(AL_ORIENTATION, &fwdup[0][0]); AL_CHECK_ERROR();
 }

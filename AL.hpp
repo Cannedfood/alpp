@@ -19,7 +19,6 @@ enum class Format {
 	MonoF32   = 0x10010,
 	StereoF32 = 0x10011
 };
-
 Format MultiChannelFormat(Format mono, unsigned channels);
 
 enum class SourceState {
@@ -46,7 +45,7 @@ public:
 	void close() noexcept;
 
 private:
-	void* mContextHandle;
+	void* mContext;
 };
 
 class BufferView {
@@ -198,6 +197,10 @@ namespace Listener {
 }
 
 } // namespace al
+
+#ifdef ALPP_INLINE
+#include "AL.cpp"
+#endif
 
 /*
  Copyright (c) 2018 Benno Straub
