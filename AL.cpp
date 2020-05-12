@@ -7,6 +7,7 @@
 
 #include <stdexcept>
 #include <cassert>
+#include <string>
 
 #ifndef ALPP_DECL
 	#ifdef ALPP_INLINE
@@ -70,16 +71,16 @@ namespace al {
 
 ALPP_DECL Context::Context(std::nullptr_t) noexcept : mContext(nullptr) {}
 
-ALPP_DECL Context::Context() noexcept :
+ALPP_DECL Context::Context(Options const& options) noexcept :
 	Context(nullptr)
 {
-	init();
+	init(options);
 }
 ALPP_DECL Context::~Context() noexcept {
 	close();
 }
 
-ALPP_DECL void Context::init() noexcept {
+ALPP_DECL void Context::init(Options const& options) noexcept {
 	close();
 
 	ALCdevice* device = alcOpenDevice(NULL); ALC_CHECK_ERROR(device);

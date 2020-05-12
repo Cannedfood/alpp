@@ -36,12 +36,16 @@ enum class SourceType {
 
 class Context {
 public:
+	struct Options {
+		
+	};
+
 	Context(std::nullptr_t) noexcept;
 
-	Context() noexcept;
+	Context(Options const& options= {}) noexcept;
 	~Context() noexcept;
 
-	void init() noexcept;
+	void init(Options const& options= {}) noexcept;
 	void close() noexcept;
 
 private:
@@ -177,24 +181,25 @@ public:
 	void destroy() noexcept;
 };
 
-namespace Listener {
-	void set(unsigned param, int       value) noexcept;
-	void set(unsigned param, float     value) noexcept;
-	void set(unsigned param, glm::vec3 value) noexcept;
+class Listener {
+public:
+	static void set(unsigned param, int       value) noexcept;
+	static void set(unsigned param, float     value) noexcept;
+	static void set(unsigned param, glm::vec3 value) noexcept;
 
-	int       geti(unsigned param) noexcept;
-	float     getf(unsigned param) noexcept;
-	glm::vec3 get3f(unsigned param) noexcept;
+	static int       geti(unsigned param) noexcept;
+	static float     getf(unsigned param) noexcept;
+	static glm::vec3 get3f(unsigned param) noexcept;
 
-	float gain() noexcept; //<! “master gain”
-	void  gain(float f) noexcept;
+	static float gain() noexcept; //<! “master gain”
+	static void  gain(float f) noexcept;
 
-	glm::vec3 position() noexcept; //<! X, Y, Z position
-	void position(glm::vec3 v) noexcept;
-	glm::vec3 velocity() noexcept; //<! velocity vector
-	void velocity(glm::vec3 v) noexcept;
-	void orientation(glm::vec3 fwd, glm::vec3 up) noexcept; //<! orientation expressed as “at” and “up” vectors
-}
+	static glm::vec3 position() noexcept; //<! X, Y, Z position
+	static void position(glm::vec3 v) noexcept;
+	static glm::vec3 velocity() noexcept; //<! velocity vector
+	static void velocity(glm::vec3 v) noexcept;
+	static void orientation(glm::vec3 fwd, glm::vec3 up) noexcept; //<! orientation expressed as “at” and “up” vectors
+};
 
 } // namespace al
 
