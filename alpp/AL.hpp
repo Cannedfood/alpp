@@ -396,7 +396,7 @@ public:
 
 } // namespace al
 
-#ifdef ALPP_INLINE
+#if defined(ALPP_INLINE) || defined(ALPP_IMPLEMENTATION)
 #include "AL.cpp"
 #endif
 
